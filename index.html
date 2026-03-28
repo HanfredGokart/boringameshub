@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BoringGamesHub</title>
+  <style>
+    /* ── TOKENS ── */
+    :root {
+      --bg:       #06060a;
+      --surface:  #0e0e16;
+      --card:     #11111c;
+      --border:   #1c1c2e;
+      --accent:   #c0392b;
+      --accent2:  #8e44ad;
+      --glow:     #e74c3c;
+      --text:     #d8dce6;
+      --muted:    #44445a;
+      --warn:     #e2a007;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      overflow-x: hidden;
+      cursor: default;
+    }
+
+    /* custom cursor dot */
+    body::after {
+      content: '';
+      position: fixed;
+      width: 8px; height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      pointer-events: none;
+      transform: translate(var(--cx, -100px), var(--cy, -100px)) translate(-50%, -50%);
+      z-index: 9999;
+      transition: transform 0.05s;
+      box-shadow: 0 0 10px var(--glow);
+    }
+
+    /* ── NOISE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.03;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2.5rem;
+      height: 60px;
+      background: rgba(6,6,10,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'Arial Black', sans-serif;
+      font-weight: 900;
+      font-size: 1.05rem;
+      letter-spacing: 0.12em;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .nav-logo span { color: var(--accent); }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -4px; left: 0;
+      width: 0; height: 1px;
+      background: var(--accent);
+      transition: width 0.25s;
+    }
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a:hover::after { width: 100%; }
+
+    .nav-badge {
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 0.25rem 0.75rem;
+    }
+
+    /* ── HERO ── */
+    #hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 6rem 2rem 4rem;
+      overflow: hidden;
+    }
+
+    /* animated background grid */
+    .hero-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+      background-size: 48px 48px;
+      animation: gridDrift 20s linear infinite;
+    }
+    @keyframes gridDrift {
+      from { background-position: 0 0; }
+      to   { background-position: 48px 48px; }
+    }
+
+    /* radial gradient atmospheric blobs */
+    .hero-glow {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 30%, rgba(142,68,173,0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 80% 70%, rgba(192,57,43,0.10) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-eyebrow {
+      font-size: 0.65rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.2rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.2s forwards;
+    }
+
+    .hero-title {
+      font-family: 'Arial Black', sans-serif;
+      font-weight: 900;
+      font-size: clamp(2.6rem, 8vw, 6rem);
+      line-height: 1.05;
+      letter-spacing: 0.04em;
+      color: #fff;
+      text-shadow: 0 0 60px rgba(192,57,43,0.3);
+      opacity: 0;
+      animation: fadeUp 0.8s 0.4s forwards;
+      margin-bottom: 0.3em;
+    }
+    .hero-title .dim { color: var(--muted); }
+    .hero-title .red { color: var(--accent); }
+
+    .hero-sub {
+      font-size: clamp(0.85rem, 2vw, 1rem);
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      max-width: 480px;
+      line-height: 1.8;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.6s forwards;
+      margin-bottom: 2.5rem;
+    }
+
+    .hero-cta {
+      display: inline-block;
+      font-family: 'Arial Black', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      padding: 0.9rem 2.5rem;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.25s;
+      box-shadow: 0 0 30px rgba(192,57,43,0.35);
+      opacity: 0;
+      animation: fadeUp 0.8s 0.8s forwards;
+    }
+    .hero-cta:hover {
+      background: var(--glow);
+      box-shadow: 0 0 55px rgba(231,76,60,0.55);
+      transform: translateY(-2px);
+    }
+
+    .hero-scroll {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      opacity: 0;
+      animation: fadeUp 1s 1.2s forwards;
+    }
+    .scroll-line {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, var(--accent), transparent);
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+    @keyframes scrollPulse {
+      0%, 100% { opacity: 0.3; }
+      50%       { opacity: 1; }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── STATS BAR ── */
+    .stats-bar {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .stat {
+      flex: 1;
+      max-width: 220px;
+      padding: 1.4rem 1rem;
+      text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .stat:last-child { border-right: none; }
+    .stat-val {
+      font-family: 'Arial Black', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: var(--accent);
+      display: block;
+    }
+    .stat-label {
+      font-size: 0.6rem;
+      letter-spacing: 0.2em;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-top: 0.25rem;
+      display: block;
+    }
+
+    /* ── SECTION SHARED ── */
+    section {
+      position: relative;
+      z-index: 1;
+    }
+    .section-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 5rem 2rem;
+    }
+    .section-eyebrow {
+      font-size: 0.6rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.6rem;
+    }
+    .section-title {
+      font-family: 'Arial Black', sans-serif;
+      font-size: clamp(1.4rem, 4vw, 2.2rem);
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 1rem;
+      letter-spacing: 0.04em;
+    }
+    .section-desc {
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.9;
+      max-width: 560px;
+      margin-bottom: 3rem;
+    }
+
+    /* ── GAMES GRID ── */
+    #games { background: var(--bg); }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+
+    /* ── GAME CARD ── */
+    .game-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+      text-decoration: none;
+      color: inherit;
+      position: relative;
+    }
+    .game-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-5px);
+      box-shadow: 0 16px 50px rgba(192,57,43,0.18);
+    }
+    .game-card:hover .card-thumb-overlay { opacity: 1; }
+    .game-card:hover .play-btn { transform: scale(1); opacity: 1; }
+
+    /* thumbnail area */
+    .card-thumb {
+      position: relative;
+      height: 160px;
+      overflow: hidden;
+      background: var(--surface);
+    }
+    .card-thumb canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .card-thumb-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(192,57,43,0.15);
+      opacity: 0;
+      transition: opacity 0.25s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .play-btn {
+      width: 52px; height: 52px;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transform: scale(0.7);
+      opacity: 0;
+      transition: all 0.25s;
+      background: rgba(0,0,0,0.5);
+    }
+    .play-btn::after {
+      content: '▶';
+      font-size: 1rem;
+      color: #fff;
+      margin-left: 3px;
+    }
+
+    .card-tag {
+      position: absolute;
+      top: 10px; left: 10px;
+      font-size: 0.55rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.5rem;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+    }
+    .card-tag.new-tag   { background: #27ae60; }
+    .card-tag.soon-tag  { background: var(--muted); }
+
+    /* card body */
+    .card-body {
+      padding: 1.1rem 1.2rem 1.3rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .card-title {
+      font-family: 'Arial Black', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: #fff;
+      margin-bottom: 0.4rem;
+    }
+    .card-desc {
+      font-size: 0.68rem;
+      color: var(--muted);
+      line-height: 1.7;
+      flex: 1;
+    }
+    .card-meta {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.9rem;
+      padding-top: 0.8rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+    }
+    .card-meta span { display: flex; align-items: center; gap: 0.3rem; }
+
+    /* placeholder canvas drawings */
+    .thumb-canvas { display: block; width: 100%; height: 100%; }
+
+    /* "Coming soon" card */
+    .game-card.soon {
+      opacity: 0.45;
+      pointer-events: none;
+      filter: grayscale(0.6);
+    }
+
+    /* ── ABOUT ── */
+    #about {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+    @media (max-width: 680px) { .about-grid { grid-template-columns: 1fr; gap: 2rem; } }
+
+    .about-feature {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1.8rem;
+    }
+    .about-icon {
+      width: 36px; height: 36px;
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+      color: var(--accent);
+    }
+    .about-feature h4 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      color: #fff;
+      margin-bottom: 0.3rem;
+    }
+    .about-feature p {
+      font-size: 0.72rem;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .about-terminal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      font-size: 0.72rem;
+      line-height: 2;
+      color: var(--muted);
+    }
+    .about-terminal .t-head {
+      display: flex; gap: 6px; margin-bottom: 1rem;
+    }
+    .t-dot { width:10px; height:10px; border-radius:50%; background:var(--muted); }
+    .t-dot:nth-child(1) { background:#c0392b; }
+    .t-dot:nth-child(2) { background:#e2a007; }
+    .t-dot:nth-child(3) { background:#27ae60; }
+    .t-line { display: block; }
+    .t-green { color: #27ae60; }
+    .t-red   { color: var(--accent); }
+    .t-white { color: #fff; }
+    .t-cursor {
+      display: inline-block;
+      width: 8px; height: 1em;
+      background: var(--accent);
+      vertical-align: middle;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      padding: 2.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      text-align: center;
+    }
+    .footer-logo {
+      font-family: 'Arial Black', sans-serif;
+      font-size: 1rem;
+      font-weight: 900;
+      color: var(--text);
+      letter-spacing: 0.1em;
+    }
+    .footer-logo span { color: var(--accent); }
+    .footer-sub {
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+    }
+    .footer-links {
+      display: flex; gap: 2rem; list-style: none;
+    }
+    .footer-links a {
+      font-size: 0.62rem;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--text); }
+    .footer-copy {
+      font-size: 0.58rem;
+      color: var(--muted);
+      opacity: 0.5;
+      letter-spacing: 0.1em;
+    }
+
+    /* ── SCROLLREVEAL HELPER ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      nav { padding: 0 1.2rem; }
+      .nav-badge { display: none; }
+      .stats-bar { flex-wrap: wrap; }
+      .stat { flex: 0 0 50%; border-right: none; border-bottom: 1px solid var(--border); }
+    }
+
+    /* ── MODAL ── */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 1000;
+      display: none;
+    }
+    .modal-content {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 1001;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+  </style>
+</head>
+<body>
+
+<!-- ══ NAV ══ -->
+<nav>
+  <a class="nav-logo" href="#"><span>Boring</span>GamesHub</a>
+  <ul class="nav-links">
+    <li><a href="#games">Games</a></li>
+    <li><a href="#about">About</a></li>
+  </ul>
+  <div class="nav-badge">v1.0 — OFFLINE</div>
+</nav>
+
+<!-- ══ HERO ══ -->
+<section id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+
+  <p class="hero-eyebrow">Welcome to BoringGamesHub</p>
+  <h1 class="hero-title">
+    Let's play<br/>
+    <span class="dim">some</span> <span class="red">games.</span>
+  </h1>
+  <p class="hero-sub">
+    A growing library of browser games — no downloads,<br/>
+    no accounts, no nonsense. Just open and play.
+  </p>
+  <a class="hero-cta" href="#games">Browse Games</a>
+
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    SCROLL
+  </div>
+</section>
+
+<!-- ══ STATS BAR ══ -->
+<div class="stats-bar reveal">
+  <div class="stat">
+    <span class="stat-val" id="game-count">1</span>
+    <span class="stat-label">Games Available</span>
+  </div>
+  <div class="stat">
+    <span class="stat-val">∞</span>
+    <span class="stat-label">Hours to waste</span>
+  </div>
+  <div class="stat">
+    <span class="stat-val">0</span>
+    <span class="stat-label">Accounts needed</span>
+  </div>
+  <div class="stat">
+    <span class="stat-val">FREE</span>
+    <span class="stat-label">Always</span>
+  </div>
+</div>
+
+<!-- ══ GAMES ══ -->
+<section id="games">
+  <div class="section-inner">
+    <p class="section-eyebrow reveal">// game library</p>
+    <h2 class="section-title reveal">Pick your poison.</h2>
+    <p class="section-desc reveal">
+      Every game runs directly in your browser. New ones get added to this grid as they're built. No install, no login — just click and play.
+    </p>
+
+    <div class="games-grid" id="games-grid">
+
+      <!-- ── CARD: Void Breaker (live) ── -->
+      <a class="game-card reveal" href="#" onclick="showModal('brickbreaker-modal', 'brickbreaker')">
+        <div class="card-thumb">
+          <canvas class="thumb-canvas" id="thumb-brickbreaker" width="260" height="160"></canvas>
+          <div class="card-tag new-tag">LIVE</div>
+          <div class="card-thumb-overlay">
+            <div class="play-btn"></div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">VOID BREAKER</div>
+          <div class="card-desc">Smash bricks, grab power-ups, don't let the ball drop. One life. Dark & moody. Can you reach the final level?</div>
+          <div class="card-meta">
+            <span>🎮 Brick Breaker</span>
+            <span>⌨ Mouse / Keys</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- ── CARD: Coming soon #1 ── -->
+      <div class="game-card soon reveal">
+        <div class="card-thumb">
+          <canvas class="thumb-canvas" id="thumb-soon1" width="260" height="160"></canvas>
+          <div class="card-tag soon-tag">SOON</div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">??? UNKNOWN</div>
+          <div class="card-desc">Something wicked this way comes. A new game is being built and will appear right here when it's ready.</div>
+          <div class="card-meta">
+            <span>🔒 Locked</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CARD: Coming soon #2 ── -->
+      <div class="game-card soon reveal">
+        <div class="card-thumb">
+          <canvas class="thumb-canvas" id="thumb-soon2" width="260" height="160"></canvas>
+          <div class="card-tag soon-tag">SOON</div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">??? UNKNOWN</div>
+          <div class="card-desc">Another experiment in progress. Check back later — the void grows.</div>
+          <div class="card-meta">
+            <span>🔒 Locked</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ══ ABOUT ══ -->
+<section id="about">
+  <div class="section-inner">
+    <div class="about-grid">
+      <div>
+        <p class="section-eyebrow reveal">// about</p>
+        <h2 class="section-title reveal">What is this place?</h2>
+        <p class="section-desc reveal" style="margin-bottom:2rem;">
+          BoringGamesHub is a personal collection of browser games — built one by one, completely offline, no servers needed. Every game lives in its own folder and gets added to this page when it's done.
+        </p>
+
+        <div class="about-feature reveal">
+          <div class="about-icon">⚡</div>
+          <div>
+            <h4>Instant Play</h4>
+            <p>Every game opens directly in your browser. Click a card, the game loads. That's it.</p>
+          </div>
+        </div>
+
+        <div class="about-feature reveal">
+          <div class="about-icon">📁</div>
+          <div>
+            <h4>Simple Structure</h4>
+            <p>Each game lives in its own folder inside <code style="color:var(--accent)">games/</code>. The library grows as new folders are added.</p>
+          </div>
+        </div>
+
+        <div class="about-feature reveal">
+          <div class="about-icon">🌑</div>
+          <div>
+            <h4>Offline First</h4>
+            <p>No internet required after opening the page. Everything runs locally on your machine.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal">
+        <div class="about-terminal">
+          <div class="t-head">
+            <div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div>
+          </div>
+          <span class="t-line"><span class="t-green">~/BoringGamesHub</span> $ ls</span>
+          <span class="t-line t-white">index.html &nbsp; css/ &nbsp; games/</span>
+          <span class="t-line">&nbsp;</span>
+          <span class="t-line"><span class="t-green">~/BoringGamesHub</span> $ ls games/</span>
+          <span class="t-line t-white">brickbreaker/</span>
+          <span class="t-line t-green">→ more coming soon...</span>
+          <span class="t-line">&nbsp;</span>
+          <span class="t-line"><span class="t-green">~/BoringGamesHub</span> $ <span class="t-cursor"></span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  <div class="footer-logo"><span>Boring</span>GamesHub</div>
+  <p class="footer-sub">A personal game library — built for fun, played offline.</p>
+  <ul class="footer-links">
+    <li><a href="#hero">Top</a></li>
+    <li><a href="#games">Games</a></li>
+    <li><a href="#about">About</a></li>
+  </ul>
+  <p class="footer-copy">No rights reserved. Copy everything.</p>
+</footer>
+
+<script>
+  // ── Game launcher ──
+  function showModal(id, game) {
+    // Open game in a new window
+    if (game) {
+      window.open('games/' + game + '.html', game, 'width=1000,height=800');
+    }
+  }
+  function hideModal(id) {
+    // Kept for compatibility, but not needed for window-based games
+    const modal = document.getElementById(id);
+    if (modal) modal.style.display = 'none';
+  }
+
+  // ── Cursor dot ──
+  document.addEventListener('mousemove', e => {
+    document.body.style.setProperty('--cx', e.clientX + 'px');
+    document.body.style.setProperty('--cy', e.clientY + 'px');
+  });
+
+  // ── Scroll reveal ──
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // ── Thumbnail: Void Breaker (mini animated preview) ──
+  (function drawBrickbreaker() {
+    const c  = document.getElementById('thumb-brickbreaker');
+    const cx = c.getContext('2d');
+    const W  = c.width, H = c.height;
+
+    const COLS = 8, ROWS = 4;
+    const bW = (W - 20) / COLS - 3;
+    const bH = 14;
+    const colors = ['#c0392b','#e67e22','#f1c40f','#27ae60','#2980b9','#8e44ad'];
+
+    const bricks = [];
+    for (let r = 0; r < ROWS; r++)
+      for (let c2 = 0; c2 < COLS; c2++)
+        bricks.push({
+          x: 10 + c2 * (bW + 3),
+          y: 12 + r * (bH + 3),
+          alive: Math.random() > 0.15,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          flash: 0,
+        });
+
+    let ball = { x: W/2, y: H*0.6, vx: 1.4, vy: -1.8, r: 5 };
+    let padX = W/2 - 28;
+
+    function frame() {
+      cx.clearRect(0, 0, W, H);
+
+      // bg
+      cx.fillStyle = '#0e0e16';
+      cx.fillRect(0, 0, W, H);
+
+      // grid
+      cx.strokeStyle = 'rgba(255,255,255,0.03)';
+      cx.lineWidth = 1;
+      for (let x = 0; x < W; x += 20) { cx.beginPath(); cx.moveTo(x,0); cx.lineTo(x,H); cx.stroke(); }
+      for (let y = 0; y < H; y += 20) { cx.beginPath(); cx.moveTo(0,y); cx.lineTo(W,y); cx.stroke(); }
+
+      // bricks
+      bricks.forEach(b => {
+        if (!b.alive) return;
+        if (b.flash > 0) { b.flash -= 0.1; cx.fillStyle = '#fff'; }
+        else cx.fillStyle = b.color;
+        cx.shadowColor = b.color; cx.shadowBlur = 6;
+        cx.fillRect(b.x, b.y, bW, bH);
+        cx.shadowBlur = 0;
+      });
+
+      // ball
+      ball.x += ball.vx; ball.y += ball.vy;
+      if (ball.x < ball.r || ball.x > W - ball.r) ball.vx *= -1;
+      if (ball.y < ball.r) ball.vy *= -1;
+      if (ball.y > H - 16 && ball.x > padX && ball.x < padX + 56) ball.vy = -Math.abs(ball.vy);
+      if (ball.y > H + 20) { ball.y = H*0.6; ball.vx = (Math.random()-0.5)*3; ball.vy = -1.8; }
+
+      // collision
+      bricks.forEach(b => {
+        if (!b.alive) return;
+        if (ball.x > b.x && ball.x < b.x+bW && ball.y > b.y && ball.y < b.y+bH) {
+          b.alive = false; b.flash = 1; ball.vy *= -1;
+          // respawn bricks after a while
+          setTimeout(() => { b.alive = true; b.color = colors[Math.floor(Math.random()*colors.length)]; }, 2000 + Math.random()*2000);
+        }
+      });
+
+      // paddle follows ball slowly
+      padX += (ball.x - 28 - padX) * 0.06;
+      padX = Math.max(0, Math.min(W - 56, padX));
+      cx.shadowColor = '#dde1e7'; cx.shadowBlur = 10;
+      cx.fillStyle = '#dde1e7';
+      cx.beginPath();
+      cx.roundRect(padX, H - 14, 56, 8, 3);
+      cx.fill();
+      cx.shadowBlur = 0;
+
+      // ball draw
+      cx.shadowColor = '#a0a0ff'; cx.shadowBlur = 12;
+      cx.fillStyle = '#fff';
+      cx.beginPath(); cx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2); cx.fill();
+      cx.shadowBlur = 0;
+
+      requestAnimationFrame(frame);
+    }
+    frame();
+  })();
+
+  // ── Thumbnail: Soon #1 (particle field) ──
+  (function drawSoon1() {
+    const c  = document.getElementById('thumb-soon1');
+    const cx = c.getContext('2d');
+    const W  = c.width, H = c.height;
+    const pts = Array.from({length:40}, () => ({
+      x: Math.random()*W, y: Math.random()*H,
+      vx: (Math.random()-.5)*0.4, vy: (Math.random()-.5)*0.4,
+      r: 1+Math.random()*2,
+    }));
+    function frame() {
+      cx.clearRect(0,0,W,H);
+      cx.fillStyle = '#0e0e16'; cx.fillRect(0,0,W,H);
+      pts.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x<0||p.x>W) p.vx*=-1;
+        if (p.y<0||p.y>H) p.vy*=-1;
+      });
+      pts.forEach((p,i) => {
+        pts.forEach((q,j) => {
+          if (j<=i) return;
+          const d = Math.hypot(p.x-q.x, p.y-q.y);
+          if (d < 60) {
+            cx.strokeStyle = `rgba(142,68,173,${0.4*(1-d/60)})`;
+            cx.lineWidth = 1;
+            cx.beginPath(); cx.moveTo(p.x,p.y); cx.lineTo(q.x,q.y); cx.stroke();
+          }
+        });
+        cx.fillStyle = '#8e44ad';
+        cx.beginPath(); cx.arc(p.x,p.y,p.r,0,Math.PI*2); cx.fill();
+      });
+      cx.fillStyle = 'rgba(255,255,255,0.06)';
+      cx.font = "bold 13px 'Arial Black', sans-serif";
+      cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      cx.fillText('COMING SOON', W/2, H/2);
+      requestAnimationFrame(frame);
+    }
+    frame();
+  })();
+
+  // ── Thumbnail: Soon #2 (scan lines) ──
+  (function drawSoon2() {
+    const c  = document.getElementById('thumb-soon2');
+    const cx = c.getContext('2d');
+    const W  = c.width, H = c.height;
+    let t = 0;
+    function frame() {
+      t += 0.02;
+      cx.fillStyle = '#0e0e16'; cx.fillRect(0,0,W,H);
+      for (let y = 0; y < H; y += 4) {
+        const a = 0.06 + 0.04 * Math.sin(y * 0.1 + t);
+        cx.fillStyle = `rgba(192,57,43,${a})`;
+        cx.fillRect(0, y, W, 2);
+      }
+      // glitch blocks
+      if (Math.random() < 0.05) {
+        const gy = Math.random()*H;
+        cx.fillStyle = `rgba(192,57,43,0.15)`;
+        cx.fillRect(0, gy, W * (0.3+Math.random()*0.7), 3+Math.random()*8);
+      }
+      cx.fillStyle = 'rgba(255,255,255,0.06)';
+      cx.font = "bold 13px 'Arial Black', sans-serif";
+      cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      cx.fillText('COMING SOON', W/2, H/2);
+      requestAnimationFrame(frame);
+    }
+    frame();
+  })();
+
+  // ── Update game count dynamically ──
+  // (When you add a new game, just increment this manually or auto-count live cards)
+  const liveCards = document.querySelectorAll('.game-card:not(.soon)').length;
+  document.getElementById('game-count').textContent = liveCards;
+</script>
+
+<!-- ══ BRICKBREAKER MODAL ══ -->
+<div id="brickbreaker-modal" class="modal">
+  <button class="close-btn" onclick="hideModal('brickbreaker-modal')">&times;</button>
+  <div class="modal-content">
+  </div>
+</div>
+
+</body>
+</html>
