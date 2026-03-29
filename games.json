@@ -1,0 +1,29 @@
+[
+  {
+    "id": "brickbreaker",
+    "title": "VOID BREAKER",
+    "description": "Smash bricks, grab power-ups, don't let the ball drop. One life. Dark & moody. Can you reach the final level?",
+    "folder": "brickbreaker",
+    "tag": "LIVE",
+    "controls": "Mouse / Keys",
+    "genre": "Brick Breaker"
+  },
+  {
+    "id": "soon-1",
+    "title": "??? UNKNOWN",
+    "description": "Something wicked this way comes. A new game is being built and will appear right here when it's ready.",
+    "folder": null,
+    "tag": "SOON",
+    "controls": "—",
+    "genre": "—"
+  },
+  {
+    "id": "soon-2",
+    "title": "??? UNKNOWN",
+    "description": "Another experiment in progress. Check back later — the void grows.",
+    "folder": null,
+    "tag": "SOON",
+    "controls": "—",
+    "genre": "—"
+  }
+]

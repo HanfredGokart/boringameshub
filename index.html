@@ -127,7 +127,6 @@
       overflow: hidden;
     }
 
-    /* animated background grid */
     .hero-grid {
       position: absolute;
       inset: 0;
@@ -142,7 +141,6 @@
       to   { background-position: 48px 48px; }
     }
 
-    /* radial gradient atmospheric blobs */
     .hero-glow {
       position: absolute;
       inset: 0;
@@ -328,17 +326,19 @@
       flex-direction: column;
       overflow: hidden;
       transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
-      text-decoration: none;
       color: inherit;
       position: relative;
     }
-    .game-card:hover {
+    .game-card:not(.soon) {
+      cursor: pointer;
+    }
+    .game-card:not(.soon):hover {
       border-color: var(--accent);
       transform: translateY(-5px);
       box-shadow: 0 16px 50px rgba(192,57,43,0.18);
     }
-    .game-card:hover .card-thumb-overlay { opacity: 1; }
-    .game-card:hover .play-btn { transform: scale(1); opacity: 1; }
+    .game-card:not(.soon):hover .card-thumb-overlay { opacity: 1; }
+    .game-card:not(.soon):hover .play-btn { transform: scale(1); opacity: 1; }
 
     /* thumbnail area */
     .card-thumb {
@@ -392,8 +392,8 @@
       color: #fff;
       font-weight: 700;
     }
-    .card-tag.new-tag   { background: #27ae60; }
-    .card-tag.soon-tag  { background: var(--muted); }
+    .card-tag.new-tag  { background: #27ae60; }
+    .card-tag.soon-tag { background: var(--muted); }
 
     /* card body */
     .card-body {
@@ -427,9 +427,6 @@
       color: var(--muted);
     }
     .card-meta span { display: flex; align-items: center; gap: 0.3rem; }
-
-    /* placeholder canvas drawings */
-    .thumb-canvas { display: block; width: 100%; height: 100%; }
 
     /* "Coming soon" card */
     .game-card.soon {
@@ -467,7 +464,6 @@
       color: var(--accent);
     }
     .about-feature h4 {
-      font-family: 'Orbitron', sans-serif;
       font-size: 0.75rem;
       letter-spacing: 0.1em;
       color: #fff;
@@ -487,16 +483,13 @@
       line-height: 2;
       color: var(--muted);
     }
-    .about-terminal .t-head {
-      display: flex; gap: 6px; margin-bottom: 1rem;
-    }
+    .about-terminal .t-head { display: flex; gap: 6px; margin-bottom: 1rem; }
     .t-dot { width:10px; height:10px; border-radius:50%; background:var(--muted); }
     .t-dot:nth-child(1) { background:#c0392b; }
     .t-dot:nth-child(2) { background:#e2a007; }
     .t-dot:nth-child(3) { background:#27ae60; }
     .t-line { display: block; }
     .t-green { color: #27ae60; }
-    .t-red   { color: var(--accent); }
     .t-white { color: #fff; }
     .t-cursor {
       display: inline-block;
@@ -528,14 +521,8 @@
       letter-spacing: 0.1em;
     }
     .footer-logo span { color: var(--accent); }
-    .footer-sub {
-      font-size: 0.65rem;
-      color: var(--muted);
-      letter-spacing: 0.15em;
-    }
-    .footer-links {
-      display: flex; gap: 2rem; list-style: none;
-    }
+    .footer-sub { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.15em; }
+    .footer-links { display: flex; gap: 2rem; list-style: none; }
     .footer-links a {
       font-size: 0.62rem;
       letter-spacing: 0.15em;
@@ -545,23 +532,15 @@
       transition: color 0.2s;
     }
     .footer-links a:hover { color: var(--text); }
-    .footer-copy {
-      font-size: 0.58rem;
-      color: var(--muted);
-      opacity: 0.5;
-      letter-spacing: 0.1em;
-    }
+    .footer-copy { font-size: 0.58rem; color: var(--muted); opacity: 0.5; letter-spacing: 0.1em; }
 
-    /* ── SCROLLREVEAL HELPER ── */
+    /* ── SCROLL REVEAL ── */
     .reveal {
       opacity: 0;
       transform: translateY(24px);
       transition: opacity 0.7s ease, transform 0.7s ease;
     }
-    .reveal.visible {
-      opacity: 1;
-      transform: none;
-    }
+    .reveal.visible { opacity: 1; transform: none; }
 
     /* ── RESPONSIVE ── */
     @media (max-width: 600px) {
@@ -571,40 +550,54 @@
       .stat { flex: 0 0 50%; border-right: none; border-bottom: 1px solid var(--border); }
     }
 
-    /* ── MODAL ── */
-    .modal {
+    /* ── GAME OVERLAY ── */
+    .game-overlay {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.9);
-      z-index: 1000;
+      inset: 0;
+      background: var(--bg);
+      z-index: 500;
       display: none;
+      flex-direction: column;
     }
-    .modal-content {
-      width: 100%;
-      height: 100%;
-      position: relative;
-    }
-    .close-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: var(--accent);
-      color: white;
-      border: none;
-      font-size: 20px;
-      cursor: pointer;
-      z-index: 1001;
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
+    .game-overlay.active { display: flex; }
+
+    .overlay-bar {
       display: flex;
       align-items: center;
-      justify-content: center;
+      gap: 1rem;
+      padding: 0.6rem 1rem;
+      background: rgba(13,13,20,0.95);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
     }
+    .overlay-close {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      font-family: 'Courier New', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      padding: 0.5rem 1.2rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      text-transform: uppercase;
+    }
+    .overlay-close:hover { background: var(--glow); }
 
+    .overlay-title {
+      font-family: 'Arial Black', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+    }
+    .overlay-title span { color: var(--text); }
+
+    .game-overlay iframe {
+      flex: 1;
+      border: none;
+      width: 100%;
+    }
   </style>
 </head>
 <body>
@@ -644,7 +637,7 @@
 <!-- ══ STATS BAR ══ -->
 <div class="stats-bar reveal">
   <div class="stat">
-    <span class="stat-val" id="game-count">1</span>
+    <span class="stat-val" id="game-count">—</span>
     <span class="stat-label">Games Available</span>
   </div>
   <div class="stat">
@@ -670,58 +663,8 @@
       Every game runs directly in your browser. New ones get added to this grid as they're built. No install, no login — just click and play.
     </p>
 
-    <div class="games-grid" id="games-grid">
-
-      <!-- ── CARD: Void Breaker (live) ── -->
-      <a class="game-card reveal" href="#" onclick="showModal('brickbreaker-modal', 'brickbreaker')">
-        <div class="card-thumb">
-          <canvas class="thumb-canvas" id="thumb-brickbreaker" width="260" height="160"></canvas>
-          <div class="card-tag new-tag">LIVE</div>
-          <div class="card-thumb-overlay">
-            <div class="play-btn"></div>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="card-title">VOID BREAKER</div>
-          <div class="card-desc">Smash bricks, grab power-ups, don't let the ball drop. One life. Dark & moody. Can you reach the final level?</div>
-          <div class="card-meta">
-            <span>🎮 Brick Breaker</span>
-            <span>⌨ Mouse / Keys</span>
-          </div>
-        </div>
-      </a>
-
-      <!-- ── CARD: Coming soon #1 ── -->
-      <div class="game-card soon reveal">
-        <div class="card-thumb">
-          <canvas class="thumb-canvas" id="thumb-soon1" width="260" height="160"></canvas>
-          <div class="card-tag soon-tag">SOON</div>
-        </div>
-        <div class="card-body">
-          <div class="card-title">??? UNKNOWN</div>
-          <div class="card-desc">Something wicked this way comes. A new game is being built and will appear right here when it's ready.</div>
-          <div class="card-meta">
-            <span>🔒 Locked</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- ── CARD: Coming soon #2 ── -->
-      <div class="game-card soon reveal">
-        <div class="card-thumb">
-          <canvas class="thumb-canvas" id="thumb-soon2" width="260" height="160"></canvas>
-          <div class="card-tag soon-tag">SOON</div>
-        </div>
-        <div class="card-body">
-          <div class="card-title">??? UNKNOWN</div>
-          <div class="card-desc">Another experiment in progress. Check back later — the void grows.</div>
-          <div class="card-meta">
-            <span>🔒 Locked</span>
-          </div>
-        </div>
-      </div>
-
-    </div>
+    <!-- Cards injected here by loadGames() -->
+    <div class="games-grid" id="games-grid"></div>
   </div>
 </section>
 
@@ -761,16 +704,17 @@
         </div>
       </div>
 
+      <!-- Terminal updates automatically from games.json via JS below -->
       <div class="reveal">
         <div class="about-terminal">
           <div class="t-head">
             <div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div>
           </div>
           <span class="t-line"><span class="t-green">~/BoringGamesHub</span> $ ls</span>
-          <span class="t-line t-white">index.html &nbsp; css/ &nbsp; games/</span>
+          <span class="t-line t-white">index.html &nbsp; games.json &nbsp; games/</span>
           <span class="t-line">&nbsp;</span>
           <span class="t-line"><span class="t-green">~/BoringGamesHub</span> $ ls games/</span>
-          <span class="t-line t-white">brickbreaker/</span>
+          <span class="t-line t-white" id="terminal-games">loading...</span>
           <span class="t-line t-green">→ more coming soon...</span>
           <span class="t-line">&nbsp;</span>
           <span class="t-line"><span class="t-green">~/BoringGamesHub</span> $ <span class="t-cursor"></span></span>
@@ -792,26 +736,16 @@
   <p class="footer-copy">No rights reserved. Copy everything.</p>
 </footer>
 
+<!-- ══ GAME OVERLAY ══ -->
+<div id="game-overlay" class="game-overlay">
+  <div class="overlay-bar">
+    <button class="overlay-close" onclick="closeGame()">✕ Back</button>
+    <div class="overlay-title">NOW PLAYING: <span id="overlay-game-title">—</span></div>
+  </div>
+  <iframe id="game-frame" src="" allowfullscreen></iframe>
+</div>
+
 <script>
-  // ── Game launcher ──
-  function showModal(id, game) {
-    // Open game in a new window
-    if (game) {
-      window.open('games/' + game + '.html', game, 'width=1000,height=800');
-    }
-  }
-  function hideModal(id) {
-    // Kept for compatibility, but not needed for window-based games
-    const modal = document.getElementById(id);
-    if (modal) modal.style.display = 'none';
-  }
-
-  // ── Cursor dot ──
-  document.addEventListener('mousemove', e => {
-    document.body.style.setProperty('--cx', e.clientX + 'px');
-    document.body.style.setProperty('--cy', e.clientY + 'px');
-  });
-
   // ── Scroll reveal ──
   const observer = new IntersectionObserver(entries => {
     entries.forEach((e, i) => {
@@ -823,12 +757,119 @@
   }, { threshold: 0.12 });
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-  // ── Thumbnail: Void Breaker (mini animated preview) ──
-  (function drawBrickbreaker() {
-    const c  = document.getElementById('thumb-brickbreaker');
-    const cx = c.getContext('2d');
-    const W  = c.width, H = c.height;
+  // ── Cursor dot ──
+  document.addEventListener('mousemove', e => {
+    document.body.style.setProperty('--cx', e.clientX + 'px');
+    document.body.style.setProperty('--cy', e.clientY + 'px');
+  });
 
+  // ── Game overlay ──
+  function openGame(folder, title) {
+    document.getElementById('game-frame').src = `games/${folder}/index.html`;
+    document.getElementById('overlay-game-title').textContent = title;
+    document.getElementById('game-overlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeGame() {
+    document.getElementById('game-overlay').classList.remove('active');
+    document.getElementById('game-frame').src = '';
+    document.getElementById('overlay-game-title').textContent = '—';
+    document.body.style.overflow = '';
+  }
+
+  // Close with Escape key
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.getElementById('game-overlay').classList.contains('active')) {
+      closeGame();
+    }
+  });
+
+  // ── Load games from games.json ──
+  async function loadGames() {
+    let games;
+    try {
+      const res = await fetch('games.json');
+      games = await res.json();
+    } catch (err) {
+      console.error('Could not load games.json:', err);
+      document.getElementById('games-grid').innerHTML =
+        `<p style="color:var(--muted);font-size:0.75rem;letter-spacing:0.1em;">
+          Could not load games — make sure you're running via Live Server, not file://.
+        </p>`;
+      return;
+    }
+
+    // Update stats counter (LIVE + NEW only)
+    const liveCount = games.filter(g => g.tag === 'LIVE' || g.tag === 'NEW').length;
+    document.getElementById('game-count').textContent = liveCount;
+
+    // Update terminal listing (LIVE + NEW folders only)
+    const liveFolders = games
+      .filter(g => g.folder)
+      .map(g => g.folder + '/')
+      .join('  ');
+    document.getElementById('terminal-games').textContent = liveFolders || '(none yet)';
+
+    // Build cards
+    const grid = document.getElementById('games-grid');
+    grid.innerHTML = '';
+
+    games.forEach(game => {
+      const isSoon   = game.tag === 'SOON';
+      const tagClass = game.tag === 'NEW'  ? 'new-tag'  :
+                       game.tag === 'SOON' ? 'soon-tag' : '';
+
+      const card = document.createElement('div');
+      card.className = `game-card reveal${isSoon ? ' soon' : ''}`;
+
+      if (!isSoon) {
+        card.addEventListener('click', () => openGame(game.folder, game.title));
+      }
+
+      card.innerHTML = `
+        <div class="card-thumb">
+          <canvas class="thumb-canvas" width="260" height="160"></canvas>
+          <div class="card-tag ${tagClass}">${game.tag}</div>
+          ${!isSoon ? `<div class="card-thumb-overlay"><div class="play-btn"></div></div>` : ''}
+        </div>
+        <div class="card-body">
+          <div class="card-title">${game.title}</div>
+          <div class="card-desc">${game.description}</div>
+          <div class="card-meta">
+            <span>🎮 ${game.genre}</span>
+            <span>⌨ ${game.controls}</span>
+          </div>
+        </div>
+      `;
+
+      grid.appendChild(card);
+
+      // Wire up scroll reveal for dynamically added cards
+      observer.observe(card);
+
+      // Draw thumbnail animation based on game id
+      const canvas = card.querySelector('.thumb-canvas');
+      drawThumb(canvas, game.id, isSoon);
+    });
+  }
+
+  // ── Thumbnail renderers ──
+  function drawThumb(canvas, gameId, isSoon) {
+    if (isSoon) {
+      drawThumbSoon(canvas, gameId);
+    } else if (gameId === 'brickbreaker') {
+      drawThumbBrickbreaker(canvas);
+    } else {
+      // Generic fallback for any new live game without a custom thumb
+      drawThumbGeneric(canvas, gameId);
+    }
+  }
+
+  // Void Breaker animated preview
+  function drawThumbBrickbreaker(c) {
+    const cx = c.getContext('2d');
+    const W = c.width, H = c.height;
     const COLS = 8, ROWS = 4;
     const bW = (W - 20) / COLS - 3;
     const bH = 14;
@@ -836,160 +877,138 @@
 
     const bricks = [];
     for (let r = 0; r < ROWS; r++)
-      for (let c2 = 0; c2 < COLS; c2++)
+      for (let col = 0; col < COLS; col++)
         bricks.push({
-          x: 10 + c2 * (bW + 3),
-          y: 12 + r * (bH + 3),
+          x: 10 + col * (bW + 3), y: 12 + r * (bH + 3),
           alive: Math.random() > 0.15,
           color: colors[Math.floor(Math.random() * colors.length)],
           flash: 0,
         });
 
     let ball = { x: W/2, y: H*0.6, vx: 1.4, vy: -1.8, r: 5 };
-    let padX = W/2 - 28;
+    let padX  = W/2 - 28;
 
     function frame() {
       cx.clearRect(0, 0, W, H);
+      cx.fillStyle = '#0e0e16'; cx.fillRect(0, 0, W, H);
 
-      // bg
-      cx.fillStyle = '#0e0e16';
-      cx.fillRect(0, 0, W, H);
-
-      // grid
-      cx.strokeStyle = 'rgba(255,255,255,0.03)';
-      cx.lineWidth = 1;
+      cx.strokeStyle = 'rgba(255,255,255,0.03)'; cx.lineWidth = 1;
       for (let x = 0; x < W; x += 20) { cx.beginPath(); cx.moveTo(x,0); cx.lineTo(x,H); cx.stroke(); }
       for (let y = 0; y < H; y += 20) { cx.beginPath(); cx.moveTo(0,y); cx.lineTo(W,y); cx.stroke(); }
 
-      // bricks
       bricks.forEach(b => {
         if (!b.alive) return;
-        if (b.flash > 0) { b.flash -= 0.1; cx.fillStyle = '#fff'; }
-        else cx.fillStyle = b.color;
+        if (b.flash > 0) { b.flash -= 0.1; cx.fillStyle = '#fff'; } else cx.fillStyle = b.color;
         cx.shadowColor = b.color; cx.shadowBlur = 6;
-        cx.fillRect(b.x, b.y, bW, bH);
-        cx.shadowBlur = 0;
+        cx.fillRect(b.x, b.y, bW, bH); cx.shadowBlur = 0;
       });
 
-      // ball
       ball.x += ball.vx; ball.y += ball.vy;
       if (ball.x < ball.r || ball.x > W - ball.r) ball.vx *= -1;
       if (ball.y < ball.r) ball.vy *= -1;
       if (ball.y > H - 16 && ball.x > padX && ball.x < padX + 56) ball.vy = -Math.abs(ball.vy);
       if (ball.y > H + 20) { ball.y = H*0.6; ball.vx = (Math.random()-0.5)*3; ball.vy = -1.8; }
 
-      // collision
       bricks.forEach(b => {
         if (!b.alive) return;
         if (ball.x > b.x && ball.x < b.x+bW && ball.y > b.y && ball.y < b.y+bH) {
-          b.alive = false; b.flash = 1; ball.vy *= -1;
-          // respawn bricks after a while
+          b.alive = false; ball.vy *= -1;
           setTimeout(() => { b.alive = true; b.color = colors[Math.floor(Math.random()*colors.length)]; }, 2000 + Math.random()*2000);
         }
       });
 
-      // paddle follows ball slowly
       padX += (ball.x - 28 - padX) * 0.06;
       padX = Math.max(0, Math.min(W - 56, padX));
-      cx.shadowColor = '#dde1e7'; cx.shadowBlur = 10;
-      cx.fillStyle = '#dde1e7';
-      cx.beginPath();
-      cx.roundRect(padX, H - 14, 56, 8, 3);
-      cx.fill();
-      cx.shadowBlur = 0;
+      cx.shadowColor = '#dde1e7'; cx.shadowBlur = 10; cx.fillStyle = '#dde1e7';
+      cx.beginPath(); cx.roundRect(padX, H - 14, 56, 8, 3); cx.fill(); cx.shadowBlur = 0;
 
-      // ball draw
-      cx.shadowColor = '#a0a0ff'; cx.shadowBlur = 12;
-      cx.fillStyle = '#fff';
-      cx.beginPath(); cx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2); cx.fill();
-      cx.shadowBlur = 0;
+      cx.shadowColor = '#a0a0ff'; cx.shadowBlur = 12; cx.fillStyle = '#fff';
+      cx.beginPath(); cx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2); cx.fill(); cx.shadowBlur = 0;
 
       requestAnimationFrame(frame);
     }
     frame();
-  })();
+  }
 
-  // ── Thumbnail: Soon #1 (particle field) ──
-  (function drawSoon1() {
-    const c  = document.getElementById('thumb-soon1');
+  // Animated "SOON" thumbnails — two variants based on index
+  function drawThumbSoon(canvas, gameId) {
+    // Alternate between particle and scanline effects
+    if (gameId === 'soon-1' || !gameId.startsWith('soon')) {
+      drawThumbParticles(canvas);
+    } else {
+      drawThumbScanlines(canvas);
+    }
+  }
+
+  function drawThumbParticles(c) {
     const cx = c.getContext('2d');
-    const W  = c.width, H = c.height;
+    const W = c.width, H = c.height;
     const pts = Array.from({length:40}, () => ({
       x: Math.random()*W, y: Math.random()*H,
       vx: (Math.random()-.5)*0.4, vy: (Math.random()-.5)*0.4,
-      r: 1+Math.random()*2,
+      r: 1 + Math.random()*2,
     }));
     function frame() {
-      cx.clearRect(0,0,W,H);
-      cx.fillStyle = '#0e0e16'; cx.fillRect(0,0,W,H);
-      pts.forEach(p => {
-        p.x += p.vx; p.y += p.vy;
-        if (p.x<0||p.x>W) p.vx*=-1;
-        if (p.y<0||p.y>H) p.vy*=-1;
-      });
+      cx.clearRect(0,0,W,H); cx.fillStyle = '#0e0e16'; cx.fillRect(0,0,W,H);
+      pts.forEach(p => { p.x+=p.vx; p.y+=p.vy; if(p.x<0||p.x>W)p.vx*=-1; if(p.y<0||p.y>H)p.vy*=-1; });
       pts.forEach((p,i) => {
         pts.forEach((q,j) => {
           if (j<=i) return;
           const d = Math.hypot(p.x-q.x, p.y-q.y);
-          if (d < 60) {
-            cx.strokeStyle = `rgba(142,68,173,${0.4*(1-d/60)})`;
-            cx.lineWidth = 1;
-            cx.beginPath(); cx.moveTo(p.x,p.y); cx.lineTo(q.x,q.y); cx.stroke();
-          }
+          if (d < 60) { cx.strokeStyle=`rgba(142,68,173,${0.4*(1-d/60)})`; cx.lineWidth=1; cx.beginPath(); cx.moveTo(p.x,p.y); cx.lineTo(q.x,q.y); cx.stroke(); }
         });
-        cx.fillStyle = '#8e44ad';
-        cx.beginPath(); cx.arc(p.x,p.y,p.r,0,Math.PI*2); cx.fill();
+        cx.fillStyle='#8e44ad'; cx.beginPath(); cx.arc(p.x,p.y,p.r,0,Math.PI*2); cx.fill();
       });
-      cx.fillStyle = 'rgba(255,255,255,0.06)';
-      cx.font = "bold 13px 'Arial Black', sans-serif";
-      cx.textAlign = 'center'; cx.textBaseline = 'middle';
-      cx.fillText('COMING SOON', W/2, H/2);
+      cx.fillStyle='rgba(255,255,255,0.06)'; cx.font="bold 13px 'Arial Black',sans-serif";
+      cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText('COMING SOON',W/2,H/2);
       requestAnimationFrame(frame);
     }
     frame();
-  })();
+  }
 
-  // ── Thumbnail: Soon #2 (scan lines) ──
-  (function drawSoon2() {
-    const c  = document.getElementById('thumb-soon2');
+  function drawThumbScanlines(c) {
     const cx = c.getContext('2d');
-    const W  = c.width, H = c.height;
+    const W = c.width, H = c.height;
     let t = 0;
     function frame() {
-      t += 0.02;
-      cx.fillStyle = '#0e0e16'; cx.fillRect(0,0,W,H);
-      for (let y = 0; y < H; y += 4) {
-        const a = 0.06 + 0.04 * Math.sin(y * 0.1 + t);
-        cx.fillStyle = `rgba(192,57,43,${a})`;
-        cx.fillRect(0, y, W, 2);
+      t += 0.02; cx.fillStyle='#0e0e16'; cx.fillRect(0,0,W,H);
+      for (let y=0; y<H; y+=4) {
+        const a = 0.06 + 0.04*Math.sin(y*0.1+t);
+        cx.fillStyle=`rgba(192,57,43,${a})`; cx.fillRect(0,y,W,2);
       }
-      // glitch blocks
-      if (Math.random() < 0.05) {
-        const gy = Math.random()*H;
-        cx.fillStyle = `rgba(192,57,43,0.15)`;
-        cx.fillRect(0, gy, W * (0.3+Math.random()*0.7), 3+Math.random()*8);
-      }
-      cx.fillStyle = 'rgba(255,255,255,0.06)';
-      cx.font = "bold 13px 'Arial Black', sans-serif";
-      cx.textAlign = 'center'; cx.textBaseline = 'middle';
-      cx.fillText('COMING SOON', W/2, H/2);
+      if (Math.random()<0.05) { cx.fillStyle=`rgba(192,57,43,0.15)`; cx.fillRect(0,Math.random()*H,W*(0.3+Math.random()*0.7),3+Math.random()*8); }
+      cx.fillStyle='rgba(255,255,255,0.06)'; cx.font="bold 13px 'Arial Black',sans-serif";
+      cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText('COMING SOON',W/2,H/2);
       requestAnimationFrame(frame);
     }
     frame();
-  })();
+  }
 
-  // ── Update game count dynamically ──
-  // (When you add a new game, just increment this manually or auto-count live cards)
-  const liveCards = document.querySelectorAll('.game-card:not(.soon)').length;
-  document.getElementById('game-count').textContent = liveCards;
+  // Generic fallback thumbnail for new live games without a custom thumb
+  function drawThumbGeneric(c, gameId) {
+    const cx = c.getContext('2d');
+    const W = c.width, H = c.height;
+    const accentColors = ['#c0392b','#8e44ad','#2980b9','#27ae60','#e67e22'];
+    const color = accentColors[Math.abs(gameId.split('').reduce((a,ch)=>a+ch.charCodeAt(0),0)) % accentColors.length];
+    let t = 0;
+    function frame() {
+      t += 0.02; cx.fillStyle='#0e0e16'; cx.fillRect(0,0,W,H);
+      cx.strokeStyle='rgba(255,255,255,0.03)'; cx.lineWidth=1;
+      for (let x=0;x<W;x+=20){cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,H);cx.stroke();}
+      for (let y=0;y<H;y+=20){cx.beginPath();cx.moveTo(0,y);cx.lineTo(W,y);cx.stroke();}
+      const r = 30 + Math.sin(t)*4;
+      cx.shadowColor=color; cx.shadowBlur=20; cx.strokeStyle=color; cx.lineWidth=2;
+      cx.beginPath(); cx.arc(W/2,H/2,r,0,Math.PI*2); cx.stroke(); cx.shadowBlur=0;
+      cx.fillStyle='rgba(255,255,255,0.5)'; cx.font="bold 11px 'Courier New'";
+      cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText('▶ PLAY',W/2,H/2);
+      requestAnimationFrame(frame);
+    }
+    frame();
+  }
+
+  // Kick everything off
+  loadGames();
 </script>
-
-<!-- ══ BRICKBREAKER MODAL ══ -->
-<div id="brickbreaker-modal" class="modal">
-  <button class="close-btn" onclick="hideModal('brickbreaker-modal')">&times;</button>
-  <div class="modal-content">
-  </div>
-</div>
 
 </body>
 </html>
