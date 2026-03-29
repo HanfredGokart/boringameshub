@@ -598,6 +598,103 @@
       border: none;
       width: 100%;
     }
+
+    /* ── USERNAME MODAL ── */
+    .username-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+    .username-modal.active { display: flex; }
+
+    .username-modal-content {
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 2.5rem;
+      border-radius: 2px;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(192,57,43,0.25);
+    }
+
+    .username-modal h2 {
+      font-family: 'Arial Black', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.05em;
+    }
+
+    .username-modal p {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.1em;
+    }
+
+    .username-modal input {
+      width: 100%;
+      padding: 0.8rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      margin-bottom: 0.8rem;
+      transition: border-color 0.2s;
+    }
+
+    .username-modal input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(192,57,43,0.3);
+    }
+
+    .username-modal .error-msg {
+      font-size: 0.7rem;
+      color: var(--warn);
+      min-height: 16px;
+      margin-bottom: 0.8rem;
+      letter-spacing: 0.08em;
+      font-style: italic;
+    }
+
+    .username-modal button {
+      display: block;
+      width: 100%;
+      padding: 0.8rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      font-family: 'Arial Black', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .username-modal button:hover {
+      background: var(--glow);
+      box-shadow: 0 0 20px rgba(231,76,60,0.4);
+    }
+
+    .nav-username {
+      font-size: 0.65rem;
+      color: var(--accent);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .nav-username:hover { color: var(--glow); }
   </style>
 </head>
 <body>
@@ -609,6 +706,7 @@
     <li><a href="#games">Games</a></li>
     <li><a href="#about">About</a></li>
   </ul>
+  <div id="nav-username" class="nav-username" onclick="showUsernameModal()">👤 Set Name</div>
   <div class="nav-badge">v1.0 — OFFLINE</div>
 </nav>
 
@@ -653,6 +751,18 @@
     <span class="stat-label">Always</span>
   </div>
 </div>
+
+<!-- ══ LEADERBOARD ══ -->
+ <section id="leaderboard-global" style="background: var(--surface); border-bottom: 1px solid var(--border);">
+  <div class="section-inner" style="padding: 3rem 2rem;">
+    <p class="section-eyebrow reveal">// hall of fame</p>
+    <h2 class="section-title reveal" style="font-size: 1.5rem;">Global Highscores</h2>
+    
+    <div id="global-scores-list" class="reveal" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 2rem; margin-top: 2rem;">
+      <p style="color:var(--muted); font-size: 0.7rem;">Loading records...</p>
+    </div>
+  </div>
+</section>
 
 <!-- ══ GAMES ══ -->
 <section id="games">
@@ -741,8 +851,25 @@
   <div class="overlay-bar">
     <button class="overlay-close" onclick="closeGame()">✕ Back</button>
     <div class="overlay-title">NOW PLAYING: <span id="overlay-game-title">—</span></div>
+    <button class="nav-username" onclick="showUsernameModal()" style="margin-left: auto;">👤 CHANGE NAME</button>
   </div>
   <iframe id="game-frame" src="" allowfullscreen></iframe>
+  <div id="leaderboard-container" style="padding: 1rem; background: var(--surface); border-top: 1px solid var(--border);">
+    <h3 style="font-size: 0.7rem; color: var(--accent); letter-spacing: 0.2em; margin-bottom: 0.5rem;">TOP SCORES</h3>
+    <ul id="leaderboard-list" style="list-style: none; font-size: 0.75rem; color: var(--muted);">
+        </ul>
+  </div>
+</div>
+
+<!-- ══ USERNAME MODAL ══ -->
+<div id="username-modal" class="username-modal">
+  <div class="username-modal-content">
+    <h2>Enter Your Name</h2>
+    <p>Get ready to claim your fame on the leaderboards</p>
+    <input id="username-input" type="text" placeholder="Your player name..." autofocus maxlength="20">
+    <div class="error-msg" id="username-error"></div>
+    <button onclick="confirmUsername()">START PLAYING</button>
+  </div>
 </div>
 
 <script>
@@ -763,18 +890,124 @@
     document.body.style.setProperty('--cy', e.clientY + 'px');
   });
 
+  // ── Player Name Management ──
+  let currentPlayer = localStorage.getItem('currentPlayer') || null;
+  const funnyMessages = [
+    "come on, even 'Player1' works!",
+    "you chicken? 🐔",
+    "your name can't just be... nothing",
+    "press F to name yourself",
+    "the leaderboard is waiting... with a blank space?",
+    "let me guess, you forgot your own name?",
+    "anonymous is lame, be somebody",
+    "your legend starts here... but we need a name first",
+    "ERROR_404_NO_NAME_FOUND.exe",
+  ];
+
+  function showUsernameModal() {
+    document.getElementById('username-modal').classList.add('active');
+    document.getElementById('username-error').textContent = '';
+    document.getElementById('username-input').value = currentPlayer || '';
+    document.getElementById('username-input').focus();
+  }
+
+  function updateNavUsernameDisplay() {
+    const navName = document.getElementById('nav-username');
+    if (!navName) return;
+    navName.textContent = currentPlayer ? `👤 ${currentPlayer} (change)` : '👤 Set Name';
+  }
+
+  function confirmUsername() {
+    const input = document.getElementById('username-input').value.trim();
+    const errorEl = document.getElementById('username-error');
+
+    if (input.length === 0) {
+      errorEl.textContent = funnyMessages[Math.floor(Math.random() * funnyMessages.length)];
+      return;
+    }
+
+    currentPlayer = input;
+    localStorage.setItem('currentPlayer', currentPlayer);
+    errorEl.textContent = '';
+    document.getElementById('username-modal').classList.remove('active');
+    updateNavUsernameDisplay();
+  }
+
+  // Allow Enter key to submit
+  document.getElementById('username-input').addEventListener('keypress', e => {
+    if (e.key === 'Enter') confirmUsername();
+  });
+
+  // ── Listen for score submissions from iframe ──
+  window.addEventListener('message', (event) => {
+    if (event.data.type === 'submitScore' && currentPlayer) {
+      const { gameId, score } = event.data;
+      
+      // Get existing scores for this game
+      const key = `scores_${gameId}`;
+      const scores = JSON.parse(localStorage.getItem(key)) || [];
+      
+      // Add new score
+      scores.push({
+        name: currentPlayer,
+        score: score,
+        date: new Date().toISOString()
+      });
+
+      // Save back to localStorage
+      localStorage.setItem(key, JSON.stringify(scores));
+
+      // Refresh leaderboard if game is still open
+      if (document.getElementById('game-overlay').classList.contains('active')) {
+        displayLeaderboard(gameId);
+      }
+
+      // Update global leaderboard
+      updateGlobalLeaderboard(window.cachedGames || []);
+    }
+  });
+
+  // Cache games for updating leaderboard later
+  window.cachedGames = [];
+
   // ── Game overlay ──
-  function openGame(folder, title) {
+  function openGame(folder, title, gameId) {
+    if (!currentPlayer) {
+      showUsernameModal();
+      return;
+    }
     document.getElementById('game-frame').src = `games/${folder}/index.html`;
     document.getElementById('overlay-game-title').textContent = title;
     document.getElementById('game-overlay').classList.add('active');
     document.body.style.overflow = 'hidden';
+    displayLeaderboard(gameId);
   }
+
+  function displayLeaderboard(gameId) {
+    const list = document.getElementById('leaderboard-list');
+    // Holen die Scores aus dem LocalStorage mit einer eindeutigen ID
+    const scores = JSON.parse(localStorage.getItem(`scores_${gameId}`)) || [];
+    
+    // Liste sortieren (Höchster Score zuerst) und die Top 5 nehmen
+    const topScores = scores.sort((a, b) => b.score - a.score).slice(0, 5);
+
+    if (topScores.length === 0) {
+        list.innerHTML = '<li style="color: var(--muted);">No records yet. Be the first!</li>';
+    } else {
+        list.innerHTML = topScores.map(s => `
+            <li style="display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px ridge var(--border);">
+                <span>${s.name}</span>
+                <span style="color: var(--text); font-weight: bold;">${s.score}</span>
+            </li>
+        `).join('');
+    }
+}
 
   function closeGame() {
     document.getElementById('game-overlay').classList.remove('active');
     document.getElementById('game-frame').src = '';
     document.getElementById('overlay-game-title').textContent = '—';
+    document.getElementById('leaderboard-list').innerHTML = '';
     document.body.style.overflow = '';
   }
 
@@ -785,12 +1018,47 @@
     }
   });
 
+  // update Global Leaderboard with scores from all games
+  function updateGlobalLeaderboard(games) {
+    const container = document.getElementById('global-scores-list');
+    if (!container) return; // Sicherheitscheck
+    
+    container.innerHTML = ''; // "Loading..." Text entfernen
+
+    games.forEach(game => {
+        // Wir holen den Score für dieses Spiel aus dem Speicher
+        const scores = JSON.parse(localStorage.getItem(`scores_${game.id}`)) || [];
+        // Sortieren: Höchster Score zuerst
+        const topScore = scores.sort((a, b) => b.score - a.score)[0];
+
+        const scoreBox = document.createElement('div');
+        // Ein bisschen Styling direkt im JS für den Tech-Look
+        scoreBox.style.cssText = "border-left: 2px solid var(--border); padding-left: 1rem; margin-bottom: 1rem;";
+        
+        if (topScore) {
+            scoreBox.innerHTML = `
+                <div style="font-size: 0.6rem; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase;">${game.title}</div>
+                <div style="font-size: 1.1rem; font-weight: bold; color: #fff; margin: 0.2rem 0;">${topScore.score}</div>
+                <div style="font-size: 0.6rem; color: var(--muted);">by ${topScore.name}</div>
+            `;
+        } else {
+            scoreBox.innerHTML = `
+                <div style="font-size: 0.6rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase;">${game.title}</div>
+                <div style="font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; font-style: italic;">No Records</div>
+            `;
+        }
+        container.appendChild(scoreBox);
+    });
+}
+
   // ── Load games from games.json ──
   async function loadGames() {
     let games;
     try {
       const res = await fetch('games.json');
       games = await res.json();
+      window.cachedGames = games; // Cache for later use
+      updateGlobalLeaderboard(games);
     } catch (err) {
       console.error('Could not load games.json:', err);
       document.getElementById('games-grid').innerHTML =
@@ -799,6 +1067,10 @@
         </p>`;
       return;
     }
+
+    // Update nav user badge and ask for username every visit (can rename at any time)
+    updateNavUsernameDisplay();
+    showUsernameModal();
 
     // Update stats counter (LIVE + NEW only)
     const liveCount = games.filter(g => g.tag === 'LIVE' || g.tag === 'NEW').length;
@@ -824,7 +1096,7 @@
       card.className = `game-card reveal${isSoon ? ' soon' : ''}`;
 
       if (!isSoon) {
-        card.addEventListener('click', () => openGame(game.folder, game.title));
+        card.addEventListener('click', () => openGame(game.folder, game.title, game.id));
       }
 
       card.innerHTML = `
@@ -1006,8 +1278,11 @@
     frame();
   }
 
-  // Kick everything off
-  loadGames();
+  // Kick everything off (ask username immediately, then load games)
+  document.addEventListener('DOMContentLoaded', () => {
+    showUsernameModal();
+    loadGames();
+  });
 </script>
 
 </body>
