@@ -311,7 +311,7 @@
     <div style="font-size:0.7rem;letter-spacing:0.2em;color:var(--muted);margin-bottom:0.5rem;">FINAL SCORE</div>
     <div class="score-display" id="end-score">0</div>
     <table id="hs-table">
-      <thead><tr><th>#</th><th>DIFFICULTY</th><th>SCORE</th></tr></thead>
+      <thead><tr><th>#</th><th>PLAYER</th><th>DIFFICULTY</th><th>SCORE</th></tr></thead>
       <tbody id="hs-body"></tbody>
     </table>
     <div class="btn-row">
@@ -383,6 +383,11 @@ const G = {
   Speedtracking: 1.0, lastSurgeCheck: 0, surgeWarningTimer: 0,
   highScores: JSON.parse(localStorage.getItem('vbHS') || '[]'),
 };
+
+function getPlayerName() {
+  const stored = (localStorage.getItem('currentPlayer') || '').trim();
+  return stored || 'Guest';
+}
 
 const keys = {};
 let mouseX = -1;
@@ -587,10 +592,25 @@ function handleLaunch(){
 }
 
 function endGame(win=false){
-  G.highScores.push({score:G.score,diff:G.diff,win});
+  const player = getPlayerName();
+
+  // Persist local per-game highscore for in-game UI
+  G.highScores.push({name:player, score:G.score, diff:G.diff, win, date:new Date().toISOString()});
   G.highScores.sort((a,b)=>b.score-a.score);
-  G.highScores=G.highScores.slice(0,10);
+  G.highScores = G.highScores.slice(0,10);
   localStorage.setItem('vbHS',JSON.stringify(G.highScores));
+
+  // Also keep landing page scoreboard in sync by using same shared key
+  const sharedKey = 'scores_brickbreaker';
+  const sharedScores = JSON.parse(localStorage.getItem(sharedKey) || '[]');
+  sharedScores.push({name:player, score:G.score, date:new Date().toISOString()});
+  localStorage.setItem(sharedKey, JSON.stringify(sharedScores));
+
+  // Send score to parent if embedded
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type:'submitScore', gameId:'brickbreaker', score:G.score, name:player }, '*');
+  }
+
   setTimeout(()=>showEndScreen(win),600);
 }
 
@@ -598,7 +618,15 @@ function showEndScreen(win){
   document.getElementById('end-title').innerHTML=win?'YOU <span>WIN</span>':'GAME <span>OVER</span>';
   document.getElementById('end-score').textContent=G.score.toLocaleString();
   const tbody=document.getElementById('hs-body'); tbody.innerHTML='';
-  G.highScores.forEach((e,i)=>{const isNew=i===0&&e.score===G.score;tbody.innerHTML+=`<tr class="${isNew?'new-entry':''}"><td>${i+1}</td><td>${e.diff.toUpperCase()} ${e.win?'✓':''}</td><td>${e.score.toLocaleString()}</td></tr>`;});
+  G.highScores.forEach((e,i)=>{
+    const isNew = i===0 && e.score===G.score;
+    tbody.innerHTML += `<tr class="${isNew?'new-entry':''}">
+      <td>${i+1}</td>
+      <td>${(e.name || 'Guest')}</td>
+      <td>${e.diff.toUpperCase()} ${e.win?'✓':''}</td>
+      <td>${e.score.toLocaleString()}</td>
+    </tr>`;
+  });
   showScreen('end-screen');
 }
 

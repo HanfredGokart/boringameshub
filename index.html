@@ -940,16 +940,21 @@
 
   // ── Listen for score submissions from iframe ──
   window.addEventListener('message', (event) => {
-    if (event.data.type === 'submitScore' && currentPlayer) {
-      const { gameId, score } = event.data;
-      
+    if (event.data.type === 'submitScore') {
+      const { gameId, score, name } = event.data;
+      const player = (name || currentPlayer || '').trim();
+      if (!player) {
+        console.warn('No player name provided in submitScore message');
+        return;
+      }
+
       // Get existing scores for this game
       const key = `scores_${gameId}`;
       const scores = JSON.parse(localStorage.getItem(key)) || [];
-      
+
       // Add new score
       scores.push({
-        name: currentPlayer,
+        name: player,
         score: score,
         date: new Date().toISOString()
       });
